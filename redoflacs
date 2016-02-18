@@ -2921,6 +2921,17 @@ _aucdtect()
 
 		printf '.' >> "${issue_ticks}"  # Add one tick to total issues
 
+	# Skip the FLAC file if it already has the 'Lossless` value set for the
+	# MASTERING tag.  This assumes that this script ran before and set it.
+	# We make sure to remove 'MASTERING=' before testing the tag field.
+	elif [[ "${bits_mastering[1]#*=}" == 'Lossless' ]]; then
+		# Print skipped FLAC
+		_print_status 'skip' "${file_basename}" "${file_length}"
+
+		# Log skipped FLAC file
+		printf "%s${unit_separator}MASTERING=Losslessvalue found; skipping ('skip_lossy' configuration)\n" "${1}" \
+			>> "${log_file}"
+
 	# Skip the FLAC file if it already has the 'Lossy' value set for the
 	# MASTERING tag.  This is only done if the value of 'skip_lossy' is 'true',
 	# set in the configuration file.  We make sure to remove 'MASTERING=' before
