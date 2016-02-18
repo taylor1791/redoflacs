@@ -398,6 +398,7 @@ This option is short for:
 \fB\-r, \-\-retag\fP
 \fB\-e, \-\-extract-artwork\fP
 \fB\-A, \-\-aucdtect-spectrogram\fP
+\fB\-M, \-\-add-mastering\fP
 .RE
 .fi
 .RE
@@ -433,6 +434,12 @@ This option has no bearing on the '\fB\-r, \-\-retag\fP' operation.  All FLAC
 tags defined in the configuration file are for use with the '\fB\-r, \-\-retag\fP'
 operation only and are not subject to, or affected by, the '\fB\-x, \-\-no-extra-tags\fP'
 option.
+.RE
+.TP
+.B \-M, \-\-add-mastering
+.RS
+Writes the MASTERING=Lossless tag to a flac file if it passes auCDtect with 
+100% confidence.
 .RE
 .TP
 .B \-o, \-\-new-config
@@ -500,6 +507,7 @@ _short_help()
 	printf '   -j[N], --jobs[=N]\n'
 	printf '   -n, --no-color\n'
 	printf '   -x, --no-extra-tags\n'
+	printf '   -M, --add-mastering\n'
 	printf '   -o, --new-config\n'
 	printf '   -v, --version\n'
 	printf '   -h, --help\n'
@@ -1843,7 +1851,7 @@ _process_positional_parameters()
 	#--
 	# Set up global variables
 	declare -g all  reallyall  create_spectrogram  no_extra_tags  no_color \
-		directory
+		directory add_mastering
 
 	# Set up local variables/arrays
 	declare -a args  long_args  short_args  non_args  converted_args
@@ -1923,6 +1931,7 @@ _process_positional_parameters()
 				'--reallyall')            converted_args+=( -L )  ;;
 				'--no-color')             converted_args+=( -n )  ;;
 				'--no-extra-tags')        converted_args+=( -x )  ;;
+				'--add-mastering')        converted_args+=( -M )  ;;
 
 				'--jobs='*)
 					# Enforce we have only digits after '--jobs=', and if so, set the
@@ -1950,7 +1959,7 @@ _process_positional_parameters()
 	# array as long arguments
 	#--
 	if [[ -n "${short_args[@]}" ]]; then
-		while getopts ":j:LlcCtgGaAmeprnxhvo" args "${short_args[@]}"; do
+		while getopts ":j:LlcCtgGaAmeprnxMhvo" args "${short_args[@]}"; do
 			case "${args}" in
 				# These arguments are to be called by themselves, so quit
 				'v') _usage; exit 1          ;;
@@ -1973,6 +1982,7 @@ _process_positional_parameters()
 				'l') converted_args+=( -l )  ;;
 				'n') converted_args+=( -n )  ;;
 				'x') converted_args+=( -x )  ;;
+				'M') converted_args+=( -M )  ;;
 
 				'j')
 					# Enforce we have only digits after '-j', and if so, set the
@@ -2023,6 +2033,7 @@ _process_positional_parameters()
 			'-L')
 				reallyall='true'
 				create_spectrogram='true'
+				add_mastering='true'
 				operations[0]='aucdtect'
 				operations[1]='md5_check'
 				operations[2]='compress_verify'
@@ -2085,6 +2096,7 @@ _process_positional_parameters()
 			'-p') operations[10]='prune'            ;;
 			'-n') no_color='true'                   ;;
 			'-x') no_extra_tags='true'              ;;
+			'-M') add_mastering='true'              ;;
 		esac
 	done
 
@@ -3125,11 +3137,27 @@ _aucdtect()
 						else
 							# FLAC is ok, display ok
 							_print_status 'ok' "${file_basename}" "${file_length}" 'aucdtect_slow'
+
+							# FLAC add Lossless MASTERING tag. This is prevent doing duplicate work
+							# next time.
+							if [[ "${add_mastering}" == 'true' ]]; then
+								metaflac ${metaflac_extra_options} \
+								  --remove-tag='MASTERING' \
+									--set-tag='MASTERING'=Lossless "${1}"
+							fi
 						fi
 					fi
 				else
 					# FLAC is ok, display ok
 					_print_status 'ok' "${file_basename}" "${file_length}" 'aucdtect_fast'
+
+					# FLAC add Lossless MASTERING tag. This is prevent doing duplicate work
+					# next time.
+					if [[ "${add_mastering}" == 'true' ]]; then
+						metaflac ${metaflac_extra_options} \
+						  --remove-tag='MASTERING' \
+							--set-tag='MASTERING'=Lossless "${1}"
+					fi
 				fi
 
 				# Remove temporary WAV file
