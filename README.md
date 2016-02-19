@@ -38,6 +38,7 @@
     Options:
       -j[N], --jobs[=N]
       -n, --no-color
+      -M, --add-mastering
       -o, --new-config
       -v, --version
       -h, --help
@@ -108,7 +109,7 @@ What this operation essentially does is scan your FLAC files and report any file
 If you invoke `redoflacs -A /path/to/flac/directory` instead, any file that doesn't pass auCDtect with 100% certainty has a spectrogram created with `SoX`. The spectrogram is created in the same directory as the FLAC file being tested with the same name as the FLAC file (with the PNG extension). If `SoX` is **\_NOT\_** installed, the program will let you know it cannot find the program and quit.
 
 ##### Options
-This program has two options to change how the program looks and operates. You can turn off all the ANSI colors that are shown via the `-n`, `--no-color` option. You can also specify the number of jobs to run (mentioned above) before the operation starts via the `-j`, `--jobs` option.
+This program has two options to change how the program looks and operates. You can turn off all the ANSI colors that are shown via the `-n`, `--no-color` option. You can also specify the number of jobs to run (mentioned above) before the operation starts via the `-j`, `--jobs` option. `-M` will add the MASTERING tag if the file passes with 100% confidence.
 
 ## Examples
 ##### Compress All FLAC Files & Verify FLAC Integrity
